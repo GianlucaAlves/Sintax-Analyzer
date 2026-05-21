@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "baseUrl": "./",
+    "paths": {
+      "@shared/*": ["../backend/src/*"]},
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
