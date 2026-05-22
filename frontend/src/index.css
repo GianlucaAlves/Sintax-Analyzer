@@ -116,6 +116,43 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: monospac
   cursor: pointer;
 }
 
+/* Highlight window: aparência de janela separada */
+.highlight-window {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+.highlight-window .hw-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.12));
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+.highlight-window .hw-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.highlight-window .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.highlight-window .dot.red { background: #ff5f56; }
+.highlight-window .dot.yellow { background: #ffbd2e; }
+.highlight-window .dot.green { background: #27c93f; }
+.highlight-window .hw-title { color: #9aa1a6; font-size: 12px; }
+.highlight-window .hw-body {
+  padding: 10px;
+  max-height: 240px;
+  overflow: auto;
+}
+
 /* Conteúdo pequeno para indicador de debounce */
 .debounce-indicator {
   font-size: 12px;

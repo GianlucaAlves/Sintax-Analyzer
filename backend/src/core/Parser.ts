@@ -2,7 +2,8 @@ import type { IParser, SyntaxError, Token } from "../contracts.js";
 import { Stack } from "./Stack.js";
 
 export class Parser implements IParser {
-  validate(tokens: Token[]): SyntaxError | null {
+  validate(tokens: Token[]): SyntaxError[] {
+    const errors: SyntaxError[] = [];
     const stack = new Stack<Token>();
     let index = 0;
 
@@ -27,44 +28,50 @@ export class Parser implements IParser {
       }
 
       if (stack.isEmpty()) {
-        return {
+        errors.push({
           line: token.line,
           column: token.column,
           char: token.value,
           message: `Fechamento '${token.value}' sem abertura correspondente.`,
-        };
+        });
+        index += 1;
+        continue;
       }
 
       const top = stack.pop();
-      if (top === undefined || top.value !== expectedOpen) {
-        return {
+      if (top === undefined) {
+        index += 1;
+        continue;
+      }
+
+      if (top.value !== expectedOpen) {
+        errors.push({
           line: token.line,
           column: token.column,
           char: token.value,
-          message: `Esperado fechamento de '${top?.value ?? expectedOpen}' (aberto na Linha ${top?.line ?? token.line}, Coluna ${top?.column ?? token.column}), mas encontrado '${token.value}'.`,
-        };
+          message: `Esperado fechamento de '${top.value}' (aberto na Linha ${top.line}, Coluna ${top.column}), mas encontrado '${token.value}'.`,
+        });
+        index += 1;
+        continue;
       }
 
       index += 1;
     }
 
-    if (!stack.isEmpty()) {
-      let firstUnclosed = stack.pop();
-      while (!stack.isEmpty()) {
-        firstUnclosed = stack.pop();
-      }
-
-      if (firstUnclosed !== undefined) {
-        return {
-          line: firstUnclosed.line,
-          column: firstUnclosed.column,
-          char: firstUnclosed.value,
-          message: `'${firstUnclosed.value}' aberto na Linha ${firstUnclosed.line}, Coluna ${firstUnclosed.column} nunca foi fechado.`,
-        };
+    // any unclosed openings left in stack -> report each
+    while (!stack.isEmpty()) {
+      const unclosed = stack.pop();
+      if (unclosed) {
+        errors.push({
+          line: unclosed.line,
+          column: unclosed.column,
+          char: unclosed.value,
+          message: `'${unclosed.value}' aberto na Linha ${unclosed.line}, Coluna ${unclosed.column} nunca foi fechado.`,
+        });
       }
     }
 
-    return null;
+    return errors;
   }
 
   private isOpenDelimiter(value: string): boolean {

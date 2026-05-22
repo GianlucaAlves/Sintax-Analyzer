@@ -6,13 +6,15 @@ interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   isLoading: boolean;
+  gotoLine?: number | null; // 1-based line number to move cursor to
 }
 
 // CodeEditor: textarea com um gutter à esquerda mostrando os números de linha.
-export function CodeEditor({ value, onChange, isLoading }: CodeEditorProps) {
+export function CodeEditor({ value, onChange, isLoading, gotoLine }: CodeEditorProps) {
   // refs para o textarea e o gutter (sincronização de scroll/altura)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const gutterRef = useRef<HTMLDivElement | null>(null);
+  
 
   // calcula quantas linhas renderizar no gutter
   const linesCount = value.split('\n').length || 1;
@@ -43,6 +45,39 @@ export function CodeEditor({ value, onChange, isLoading }: CodeEditorProps) {
     gu.style.height = h + 'px';
   }, [value]);
 
+  // if `gotoLine` prop changes, move the cursor to the start of that line
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    if (gotoLine == null) return;
+    const line = Math.max(1, Math.floor(gotoLine));
+
+    // compute character index of start of that line
+    let pos = 0;
+    let currentLine = 1;
+    while (currentLine < line && pos < value.length) {
+      const idx = value.indexOf('\n', pos);
+      if (idx === -1) { pos = value.length; break; }
+      pos = idx + 1;
+      currentLine += 1;
+    }
+
+    // ensure DOM updates applied before setting selection
+    setTimeout(() => {
+      try {
+        ta.focus();
+        ta.selectionStart = ta.selectionEnd = pos;
+        // scroll approximate position into view
+        const ratio = value.length > 0 ? pos / value.length : 0;
+        ta.scrollTop = Math.max(0, Math.floor(ratio * ta.scrollHeight) - 40);
+      } catch (e) {
+        // ignore
+      }
+    }, 0);
+  }, [gotoLine, value]);
+
+  
+
   return (
     // layout: gutter (números de linha) + textarea
     <div style={{ display: 'flex', alignItems: 'stretch', height: '100%' }}>
@@ -65,7 +100,6 @@ export function CodeEditor({ value, onChange, isLoading }: CodeEditorProps) {
           lineHeight: '1.6',
         }}
       >
-        {/* render numbers 1..N */}
         <pre style={{ margin: 0 }}>{Array.from({ length: linesCount }, (_, i) => i + 1).join('\n')}</pre>
       </div>
 

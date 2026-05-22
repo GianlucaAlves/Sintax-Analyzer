@@ -23,7 +23,7 @@ export interface SyntaxError {
 
 export interface AnalysisResult {
   tokens: Token[];
-  syntaxError: SyntaxError | null;
+  syntaxError: SyntaxError[]; // lista de erros (vazia = sem erros)
 }
 
 export interface AnalyzeRequestBody {
@@ -33,7 +33,7 @@ export interface AnalyzeRequestBody {
 export interface AnalyzeResponseBody {
   status: 'success' | 'error';
   tokens: Token[];
-  syntaxError: SyntaxError | null;
+  syntaxError: SyntaxError[];
 }
 
 export interface IStack<T> {
@@ -49,7 +49,7 @@ export interface ILexer {
 }
 
 export interface IParser {
-  validate(tokens: Token[]): SyntaxError | null;
+  validate(tokens: Token[]): SyntaxError[];
 }
 
 export interface IAnalyzer {

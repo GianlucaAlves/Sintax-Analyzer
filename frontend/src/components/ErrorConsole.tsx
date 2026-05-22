@@ -1,12 +1,13 @@
 
 import { SyntaxError } from '@shared/contracts';
 
-// `syntaxError`: erro retornado pelo backend (ou null)
+// `syntaxError`: lista de erros retornada pelo backend (ou null)
 type AnalysisStatus = 'idle' | 'loading' | 'success' | 'error';
 
 interface ErrorConsoleProps {
-  syntaxError: SyntaxError | null;
+  syntaxError: SyntaxError[] | null;
   analysisStatus: AnalysisStatus;
+  onGotoLine?: (line: number) => void;
 }
 
 // Mapeia estilos por estado (usado para indicar sucesso/erro/carregando)
@@ -17,23 +18,45 @@ const STATUS_STYLES: Record<AnalysisStatus, { bg: string; color: string }> = {
   error:   { bg: '#3a1a1a', color: '#f44747' },
 };
 
-export function ErrorConsole({ syntaxError, analysisStatus }: ErrorConsoleProps) {
+export function ErrorConsole({ syntaxError, analysisStatus, onGotoLine }: ErrorConsoleProps) {
   const { bg, color } = STATUS_STYLES[analysisStatus];
 
-  const getMessage = () => {
-    if (analysisStatus === 'idle')    return '— Aguardando análise...';
+  const renderContent = () => {
+    if (analysisStatus === 'idle') return '— Aguardando análise...';
     if (analysisStatus === 'loading') return '🔄 Analisando...';
     if (analysisStatus === 'success') return '✅ Nenhum erro encontrado.';
-    if (syntaxError) {
-      return `❌ Erro na Linha ${syntaxError.line}, Coluna ${syntaxError.column}: ${syntaxError.message}`;
+
+    // error status: show each syntax error on its own line
+    if (syntaxError && syntaxError.length > 0) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {syntaxError.map((err, i) => {
+            // remove menção à coluna das mensagens
+            const cleaned = err.message.replace(/,?\s*Coluna\s*\d+/g, '');
+            return (
+              <div
+                key={i}
+                onClick={() => onGotoLine?.(err.line)}
+                style={{ whiteSpace: 'pre-wrap', cursor: 'pointer' }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onGotoLine?.(err.line); }}
+              >
+                {`[ERRO] Linha ${err.line} : ${cleaned}`}
+              </div>
+            );
+          })}
+        </div>
+      );
     }
+
     return '❌ Erro desconhecido.';
   };
 
   return (
     <div
       role="log"
-      aria-live="polite" // ajuda leitores de tela a anunciar mudanças
+      aria-live="polite"
       style={{
         fontFamily: 'monospace',
         fontSize: '13px',
@@ -47,7 +70,7 @@ export function ErrorConsole({ syntaxError, analysisStatus }: ErrorConsoleProps)
         transition: 'background-color 0.2s, color 0.2s',
       }}
     >
-      {getMessage()}
+      {renderContent()}
     </div>
   );
 }

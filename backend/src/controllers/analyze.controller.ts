@@ -18,7 +18,7 @@ export class AnalyzeController {
       const result = this.analyzerService.analyze(sourceCode); 
 
       const response: AnalyzeResponseBody = {
-        status: result.syntaxError ? 'error' : 'success',
+        status: result.syntaxError && result.syntaxError.length > 0 ? 'error' : 'success',
         tokens: result.tokens,
         syntaxError: result.syntaxError,
       };

@@ -9,6 +9,15 @@ type AnalysisStatus = 'idle' | 'loading' | 'success' | 'error';
 export function App() {
   // estado: texto do editor
   const [sourceCode, setSourceCode] = useState('');
+  const [gotoLine, setGotoLine] = useState<number | null>(null);
+
+  // reset gotoLine after used so repeated clicks work
+  useEffect(() => {
+    if (gotoLine == null) return;
+    const t = window.setTimeout(() => setGotoLine(null), 300);
+    return () => clearTimeout(t);
+  }, [gotoLine]);
+
   // resultado da análise (tokens + erro)
   const [result, setResult] = useState<AnalyzeResponseBody | null>(null);
   // status da análise: idle/loading/success/error
@@ -19,6 +28,7 @@ export function App() {
   const [debounceMs, setDebounceMs] = useState(0);
   // token selecionado na lista (index)
   const [selectedTokenIndex, setSelectedTokenIndex] = useState<number | null>(null);
+  // (Todas as análises serão feitas no backend; o frontend apenas envia e exibe `result`.)
   // tempo de debounce em ms
   const DEBOUNCE_MS = 500;
 
@@ -53,32 +63,32 @@ export function App() {
   };
 
   useEffect(() => {
-  // efeito: debounce para disparar análise 500ms após parar de digitar
-  if (debounceRef.current !== null) window.clearTimeout(debounceRef.current);
-  if (!sourceCode.trim()) {
-    setAnalysisStatus('idle');
-    setResult(null);
-    setDebounceMs(0);
-    return;
-  }
-
-  setDebounceMs(500);
-  const tick = setInterval(() => setDebounceMs((v) => {
-    const nv = v - 100;
-    return nv > 0 ? nv : 0;
-  }), 100);
-
-  debounceRef.current = window.setTimeout(() => {
-    clearInterval(tick);
-    setDebounceMs(0);
-    analyzeNow(sourceCode);
-  }, 500);
-
-  return () => {
+    // efeito: debounce para disparar análise 500ms após parar de digitar (apenas backend)
     if (debounceRef.current !== null) window.clearTimeout(debounceRef.current);
-    clearInterval(tick);
-  };
-}, [sourceCode]);
+    if (!sourceCode.trim()) {
+      setAnalysisStatus('idle');
+      setResult(null);
+      setDebounceMs(0);
+      return;
+    }
+
+    setDebounceMs(500);
+    const tick = setInterval(() => setDebounceMs((v) => {
+      const nv = v - 100;
+      return nv > 0 ? nv : 0;
+    }), 100);
+
+    debounceRef.current = window.setTimeout(() => {
+      clearInterval(tick);
+      setDebounceMs(0);
+      analyzeNow(sourceCode);
+    }, 500);
+
+    return () => {
+      if (debounceRef.current !== null) window.clearTimeout(debounceRef.current);
+      clearInterval(tick);
+    };
+  }, [sourceCode]);
 
  return (
   <div style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px' }}>
@@ -91,7 +101,26 @@ export function App() {
       {/* editor: área de edição do código */}
       <div className="card editor-card">
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <CodeEditor value={sourceCode} onChange={setSourceCode} isLoading={analysisStatus === 'loading'} />
+          <CodeEditor value={sourceCode} onChange={setSourceCode} isLoading={analysisStatus === 'loading'} gotoLine={gotoLine} />
+
+          {/* Visualização com destaque: mostra os tokens retornados pelo backend */}
+          <div className="highlight-window" style={{ marginTop: 12 }}>
+            <div className="hw-header">
+              <div className="hw-controls">
+                <span className="dot red" />
+                <span className="dot yellow" />
+                <span className="dot green" />
+              </div>
+              <div className="hw-title">Visualização de código</div>
+            </div>
+            <div className="hw-body">
+              <HighlightedCode
+                tokens={result?.tokens ?? []}
+                selectedIndex={selectedTokenIndex ?? undefined}
+                onSelect={(idx) => setSelectedTokenIndex(idx)}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -118,7 +147,11 @@ export function App() {
 
         {/* console que mostra mensagens de erro/estado */}
         <div className="error-console card" style={{ padding: 10 }}>
-          <ErrorConsole syntaxError={result?.syntaxError ?? null} analysisStatus={analysisStatus} />
+          <ErrorConsole
+            syntaxError={result?.syntaxError ?? null}
+            analysisStatus={analysisStatus}
+            onGotoLine={(l) => { setGotoLine(l); }}
+          />
         </div>
 
         {selectedTokenIndex !== null && result && result.tokens[selectedTokenIndex] && (

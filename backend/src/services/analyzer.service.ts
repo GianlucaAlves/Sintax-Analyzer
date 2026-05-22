@@ -8,7 +8,7 @@ export class AnalyzerService implements IAnalyzer {
 
   analyze(sourceCode: string): AnalysisResult {
     const tokens = this.lexer.tokenize(sourceCode);
-    const syntaxError = this.parser.validate(tokens);
-    return { tokens, syntaxError };
+    const syntaxErrors = this.parser.validate(tokens);
+    return { tokens, syntaxError: syntaxErrors };
   }
 }
