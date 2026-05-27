@@ -6,11 +6,11 @@ interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   isLoading: boolean;
-  gotoLine?: number | null; // 1-based line number to move cursor to
+  gotoPosition?: { line: number; column?: number } | null; // 1-based position to move cursor to
 }
 
 // CodeEditor: textarea com um gutter à esquerda mostrando os números de linha.
-export function CodeEditor({ value, onChange, isLoading, gotoLine }: CodeEditorProps) {
+export function CodeEditor({ value, onChange, isLoading, gotoPosition }: CodeEditorProps) {
   // refs para o textarea e o gutter (sincronização de scroll/altura)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const gutterRef = useRef<HTMLDivElement | null>(null);
@@ -45,12 +45,13 @@ export function CodeEditor({ value, onChange, isLoading, gotoLine }: CodeEditorP
     gu.style.height = h + 'px';
   }, [value]);
 
-  // if `gotoLine` prop changes, move the cursor to the start of that line
+  // if `gotoPosition` prop changes, move the cursor to that line/column
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
-    if (gotoLine == null) return;
-    const line = Math.max(1, Math.floor(gotoLine));
+    if (gotoPosition == null) return;
+    const line = Math.max(1, Math.floor(gotoPosition.line));
+    const column = gotoPosition.column ? Math.max(1, Math.floor(gotoPosition.column)) : 1;
 
     // compute character index of start of that line
     let pos = 0;
@@ -61,6 +62,9 @@ export function CodeEditor({ value, onChange, isLoading, gotoLine }: CodeEditorP
       pos = idx + 1;
       currentLine += 1;
     }
+
+    // add column offset (column is 1-based)
+    pos = Math.min(value.length, pos + Math.max(0, column - 1));
 
     // ensure DOM updates applied before setting selection
     setTimeout(() => {
@@ -74,7 +78,7 @@ export function CodeEditor({ value, onChange, isLoading, gotoLine }: CodeEditorP
         // ignore
       }
     }, 0);
-  }, [gotoLine, value]);
+  }, [gotoPosition, value]);
 
   
 

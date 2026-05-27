@@ -9,14 +9,14 @@ type AnalysisStatus = 'idle' | 'loading' | 'success' | 'error';
 export function App() {
   // estado: texto do editor
   const [sourceCode, setSourceCode] = useState('');
-  const [gotoLine, setGotoLine] = useState<number | null>(null);
+  const [gotoPosition, setGotoPosition] = useState<{ line: number; column?: number } | null>(null);
 
   // reset gotoLine after used so repeated clicks work
   useEffect(() => {
-    if (gotoLine == null) return;
-    const t = window.setTimeout(() => setGotoLine(null), 300);
+    if (gotoPosition == null) return;
+    const t = window.setTimeout(() => setGotoPosition(null), 300);
     return () => clearTimeout(t);
-  }, [gotoLine]);
+  }, [gotoPosition]);
 
   // resultado da análise (tokens + erro)
   const [result, setResult] = useState<AnalyzeResponseBody | null>(null);
@@ -101,7 +101,7 @@ export function App() {
       {/* editor: área de edição do código */}
       <div className="card editor-card">
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <CodeEditor value={sourceCode} onChange={setSourceCode} isLoading={analysisStatus === 'loading'} gotoLine={gotoLine} />
+          <CodeEditor value={sourceCode} onChange={setSourceCode} isLoading={analysisStatus === 'loading'} gotoPosition={gotoPosition} />
 
           {/* Visualização com destaque: mostra os tokens retornados pelo backend */}
           <div className="highlight-window" style={{ marginTop: 12 }}>
@@ -150,7 +150,7 @@ export function App() {
           <ErrorConsole
             syntaxError={result?.syntaxError ?? null}
             analysisStatus={analysisStatus}
-            onGotoLine={(l) => { setGotoLine(l); }}
+            onGotoLine={(l, c) => { setGotoPosition({ line: l, column: c ?? undefined }); }}
           />
         </div>
 

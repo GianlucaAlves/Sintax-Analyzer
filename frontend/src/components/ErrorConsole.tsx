@@ -7,7 +7,7 @@ type AnalysisStatus = 'idle' | 'loading' | 'success' | 'error';
 interface ErrorConsoleProps {
   syntaxError: SyntaxError[] | null;
   analysisStatus: AnalysisStatus;
-  onGotoLine?: (line: number) => void;
+  onGotoLine?: (line: number, column?: number) => void;
 }
 
 // Mapeia estilos por estado (usado para indicar sucesso/erro/carregando)
@@ -31,18 +31,21 @@ export function ErrorConsole({ syntaxError, analysisStatus, onGotoLine }: ErrorC
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {syntaxError.map((err, i) => {
-            // remove menção à coluna das mensagens
-            const cleaned = err.message.replace(/,?\s*Coluna\s*\d+/g, '');
+            // remove possíveis menções embutidas de linha/coluna na mensagem para evitar duplicação
+            const cleaned = err.message
+              .replace(/,?\s*Linha\s*\d+,\s*Coluna\s*\d+/g, '')
+              .replace(/,?\s*Coluna\s*\d+/g, '')
+              .trim();
             return (
               <div
                 key={i}
-                onClick={() => onGotoLine?.(err.line)}
+                onClick={() => onGotoLine?.(err.line, err.column)}
                 style={{ whiteSpace: 'pre-wrap', cursor: 'pointer' }}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onGotoLine?.(err.line); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onGotoLine?.(err.line, err.column); }}
               >
-                {`[ERRO] Linha ${err.line} : ${cleaned}`}
+                {`[ERRO] Linha ${err.line}, Coluna ${err.column} : ${cleaned}`}
               </div>
             );
           })}
