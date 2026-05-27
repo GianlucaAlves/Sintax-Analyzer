@@ -7,6 +7,13 @@ export type TokenType =
   | 'WHITESPACE'
   | 'UNKNOWN';
 
+export type ProgrammingLanguage =
+  | 'python'
+  | 'typescript'
+  | 'java'
+  | 'cpp'
+  | 'csharp';
+
 export interface Token {
   type: TokenType;
   value: string;
@@ -28,6 +35,7 @@ export interface AnalysisResult {
 
 export interface AnalyzeRequestBody {
   sourceCode: string;
+  language?: ProgrammingLanguage;
 }
 
 export interface AnalyzeResponseBody {
@@ -45,7 +53,7 @@ export interface IStack<T> {
 }
 
 export interface ILexer {
-  tokenize(sourceCode: string): Token[];
+  tokenize(sourceCode: string, language?: ProgrammingLanguage): Token[];
 }
 
 export interface IParser {
@@ -53,5 +61,5 @@ export interface IParser {
 }
 
 export interface IAnalyzer {
-  analyze(sourceCode: string): AnalysisResult;
+  analyze(sourceCode: string, language?: ProgrammingLanguage): AnalysisResult;
 }

@@ -1,6 +1,5 @@
 
-
-import { Token, TokenType } from '@shared/contracts';
+import type { Token, TokenType } from '@shared/contracts';
 
 // Props: `tokens` lista de tokens recebidos do backend; `selectedIndex` token marcado; `onSelect` callback ao clicar.
 interface HighlightedCodeProps {

@@ -25,9 +25,40 @@ describe('Parser', () => {
       },
       {
         line: 1,
+        column: 4,
+        char: ']',
+        message: "Fechamento ']' sem abertura correspondente.",
+      },
+      {
+        line: 1,
         column: 1,
         char: '(',
         message: "'(' aberto na Linha 1, Coluna 1 nunca foi fechado.",
+      },
+    ]);
+  });
+
+  it('classifica fechamentos extras dentro de bloco corretamente', () => {
+    const tokens = lexer.tokenize('int main(){\n    ))(\n}');
+
+    expect(parser.validate(tokens)).toEqual([
+      {
+        line: 2,
+        column: 5,
+        char: ')',
+        message: "Fechamento ')' sem abertura correspondente.",
+      },
+      {
+        line: 2,
+        column: 6,
+        char: ')',
+        message: "Fechamento ')' sem abertura correspondente.",
+      },
+      {
+        line: 2,
+        column: 7,
+        char: '(',
+        message: "'(' aberto na Linha 2, Coluna 7 nunca foi fechado.",
       },
     ]);
   });
@@ -78,13 +109,19 @@ describe('Parser', () => {
         line: 2,
         column: 1,
         char: ')',
-        message: "Esperado ']' para fechar '[' (aberto na Linha 1, Coluna 1), mas encontrado ')'.",
+        message: "Fechamento ')' sem abertura correspondente.",
       },
       {
         line: 3,
         column: 1,
         char: '}',
         message: "Fechamento '}' sem abertura correspondente.",
+      },
+      {
+        line: 1,
+        column: 1,
+        char: '[',
+        message: "'[' aberto na Linha 1, Coluna 1 nunca foi fechado.",
       },
     ]);
   });
@@ -110,13 +147,19 @@ describe('Parser', () => {
         line: 2,
         column: 12,
         char: ']',
-        message: "Esperado ')' para fechar '(' (aberto na Linha 2, Coluna 6), mas encontrado ']'.",
+        message: "Fechamento ']' sem abertura correspondente.",
       },
       {
         line: 3,
         column: 16,
         char: ')',
         message: "Fechamento ')' sem abertura correspondente.",
+      },
+      {
+        line: 2,
+        column: 6,
+        char: '(',
+        message: "'(' aberto na Linha 2, Coluna 6 nunca foi fechado.",
       },
     ]);
   });
@@ -129,13 +172,19 @@ describe('Parser', () => {
         line: 2,
         column: 12,
         char: ']',
-        message: "Esperado ')' para fechar '(' (aberto na Linha 2, Coluna 6), mas encontrado ']'.",
+        message: "Fechamento ']' sem abertura correspondente.",
       },
       {
         line: 3,
         column: 16,
         char: ')',
         message: "Fechamento ')' sem abertura correspondente.",
+      },
+      {
+        line: 2,
+        column: 6,
+        char: '(',
+        message: "'(' aberto na Linha 2, Coluna 6 nunca foi fechado.",
       },
       {
         line: 1,

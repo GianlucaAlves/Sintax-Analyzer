@@ -6,7 +6,8 @@
     "scripts": {
         "build": "tsc --noEmit",
         "test": "vitest run",
-        "dev:backend": "tsx backend/src/server.ts",
+        "dev": "pnpm run --parallel \"/^dev:.*/\"",
+        "dev:backend": "tsx watch backend/src/server.ts",
         "dev:frontend": "vite frontend"
     },
     "devDependencies": {

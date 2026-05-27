@@ -1,14 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
-import { AnalyzeResponseBody } from '@shared/contracts';
+import type { AnalyzeResponseBody, ProgrammingLanguage } from '@shared/contracts';
 import { CodeEditor } from './components/CodeEditor';
 import { HighlightedCode } from './components/HighlightedCode';
 import { ErrorConsole } from './components/ErrorConsole';
 
 type AnalysisStatus = 'idle' | 'loading' | 'success' | 'error';
 
+const LANGUAGE_OPTIONS: { value: ProgrammingLanguage; label: string }[] = [
+  { value: 'typescript', label: 'TypeScript' },
+  { value: 'python', label: 'Python' },
+  { value: 'java', label: 'Java' },
+  { value: 'cpp', label: 'C++' },
+  { value: 'csharp', label: 'C#' },
+];
+
 export function App() {
   // estado: texto do editor
   const [sourceCode, setSourceCode] = useState('');
+  const [language, setLanguage] = useState<ProgrammingLanguage>('typescript');
   const [gotoPosition, setGotoPosition] = useState<{ line: number; column?: number } | null>(null);
 
   // reset gotoLine after used so repeated clicks work
@@ -32,7 +41,7 @@ export function App() {
   // tempo de debounce em ms
   const DEBOUNCE_MS = 500;
 
-  const analyzeNow = async (code?: string) => {
+  const analyzeNow = async (code?: string, selectedLanguage = language) => {
     // envia o código ao backend e atualiza `result` e `analysisStatus`
     const sc = code ?? sourceCode;
     if (!sc.trim()) {
@@ -46,7 +55,7 @@ export function App() {
       const res = await fetch('http://localhost:3333/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sourceCode: sc }),
+        body: JSON.stringify({ sourceCode: sc, language: selectedLanguage }),
       });
       if (!res.ok) {
         setResult(null);
@@ -60,6 +69,13 @@ export function App() {
       setResult(null);
       setAnalysisStatus('error');
     }
+  };
+
+  const handleLanguageChange = (nextLanguage: ProgrammingLanguage) => {
+    setLanguage(nextLanguage);
+    setSelectedTokenIndex(null);
+    if (debounceRef.current !== null) window.clearTimeout(debounceRef.current);
+    if (sourceCode.trim()) analyzeNow(sourceCode, nextLanguage);
   };
 
   useEffect(() => {
@@ -81,14 +97,14 @@ export function App() {
     debounceRef.current = window.setTimeout(() => {
       clearInterval(tick);
       setDebounceMs(0);
-      analyzeNow(sourceCode);
+      analyzeNow(sourceCode, language);
     }, 500);
 
     return () => {
       if (debounceRef.current !== null) window.clearTimeout(debounceRef.current);
       clearInterval(tick);
     };
-  }, [sourceCode]);
+  }, [sourceCode, language]);
 
  return (
   <div style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px' }}>
@@ -130,6 +146,18 @@ export function App() {
           <div className="toolbar" style={{ marginBottom: 8 }}>
             {/* botão para limpar o editor */}
             <button onClick={() => { setSourceCode(''); setResult(null); }}>Limpar</button>
+
+            <select
+              value={language}
+              onChange={(event) => handleLanguageChange(event.target.value as ProgrammingLanguage)}
+              aria-label="Linguagem"
+            >
+              {LANGUAGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
 
             {/* indicador de debounce (barra + texto) alinhado à direita */}
             <div className="debounce-wrapper">

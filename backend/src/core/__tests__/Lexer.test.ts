@@ -13,6 +13,33 @@ describe('Lexer', () => {
     ]);
   });
 
+  it('usa TypeScript como linguagem padrao', () => {
+    const lexer = new Lexer();
+
+    const tokens = lexer.tokenize('interface');
+
+    expect(tokens).toEqual([
+      { type: 'KEYWORD', value: 'interface', line: 1, column: 1 },
+    ]);
+  });
+
+  it('marca palavras reservadas conforme a linguagem selecionada', () => {
+    const lexer = new Lexer();
+
+    expect(lexer.tokenize('def', 'python')).toEqual([
+      { type: 'KEYWORD', value: 'def', line: 1, column: 1 },
+    ]);
+    expect(lexer.tokenize('def', 'java')).toEqual([
+      { type: 'IDENTIFIER', value: 'def', line: 1, column: 1 },
+    ]);
+    expect(lexer.tokenize('namespace', 'cpp')).toEqual([
+      { type: 'KEYWORD', value: 'namespace', line: 1, column: 1 },
+    ]);
+    expect(lexer.tokenize('namespace', 'csharp')).toEqual([
+      { type: 'KEYWORD', value: 'namespace', line: 1, column: 1 },
+    ]);
+  });
+
   it('nao marca keyword contida dentro de identificador', () => {
     const lexer = new Lexer();
 

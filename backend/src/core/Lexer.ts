@@ -1,22 +1,10 @@
-import type { ILexer, Token, TokenType } from "../contracts.js";
-
-const RESERVED_WORDS = [
-  "if",
-  "else",
-  "while",
-  "for",
-  "return",
-  "let",
-  "const",
-  "fn",
-  "true",
-  "false",
-  "null",
-] as const;
+import type { ILexer, ProgrammingLanguage, Token, TokenType } from "../contracts.js";
+import { DEFAULT_LANGUAGE, RESERVED_WORDS_BY_LANGUAGE, normalizeLanguage } from "./ReservedWords.js";
 
 export class Lexer implements ILexer {
-  tokenize(sourceCode: string): Token[] {
+  tokenize(sourceCode: string, language: ProgrammingLanguage = DEFAULT_LANGUAGE): Token[] {
     const tokens: Token[] = [];
+    const reservedWords = RESERVED_WORDS_BY_LANGUAGE[normalizeLanguage(language)];
     let line = 1;
     let column = 1;
     let index = 0;
@@ -62,7 +50,7 @@ export class Lexer implements ILexer {
           column += 1;
         }
 
-        const type: TokenType = this.isReservedWord(value)
+        const type: TokenType = reservedWords.has(value)
           ? "KEYWORD"
           : "IDENTIFIER";
         this.addToken(tokens, {
@@ -148,20 +136,6 @@ export class Lexer implements ILexer {
 
   private isAlphanumeric(char: string): boolean {
     return this.isLetter(char) || this.isDigit(char);
-  }
-
-  private isReservedWord(value: string): boolean {
-    let index = 0;
-
-    while (index < RESERVED_WORDS.length) {
-      if (RESERVED_WORDS[index] === value) {
-        return true;
-      }
-
-      index += 1;
-    }
-
-    return false;
   }
 
   private addToken(tokens: Token[], token: Token): void {

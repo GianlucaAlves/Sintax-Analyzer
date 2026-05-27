@@ -1,7 +1,6 @@
+import { useEffect, useState } from 'react';
+import type { SyntaxError } from '@shared/contracts';
 
-import { SyntaxError } from '@shared/contracts';
-
-// `syntaxError`: lista de erros retornada pelo backend (ou null)
 type AnalysisStatus = 'idle' | 'loading' | 'success' | 'error';
 
 interface ErrorConsoleProps {
@@ -10,50 +9,73 @@ interface ErrorConsoleProps {
   onGotoLine?: (line: number, column?: number) => void;
 }
 
-// Mapeia estilos por estado (usado para indicar sucesso/erro/carregando)
 const STATUS_STYLES: Record<AnalysisStatus, { bg: string; color: string }> = {
-  idle:    { bg: '#2a2a2a', color: '#888' },
+  idle: { bg: '#2a2a2a', color: '#888' },
   loading: { bg: '#2a2a2a', color: '#aaa' },
   success: { bg: '#1a3a1a', color: '#4ec94e' },
-  error:   { bg: '#3a1a1a', color: '#f44747' },
+  error: { bg: '#3a1a1a', color: '#f44747' },
 };
+
+const INITIAL_VISIBLE_ERRORS = 3;
 
 export function ErrorConsole({ syntaxError, analysisStatus, onGotoLine }: ErrorConsoleProps) {
   const { bg, color } = STATUS_STYLES[analysisStatus];
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    setShowAll(false);
+  }, [syntaxError]);
 
   const renderContent = () => {
-    if (analysisStatus === 'idle') return '— Aguardando análise...';
-    if (analysisStatus === 'loading') return '🔄 Analisando...';
-    if (analysisStatus === 'success') return '✅ Nenhum erro encontrado.';
+    if (analysisStatus === 'idle') return '-- Aguardando analise...';
+    if (analysisStatus === 'loading') return 'Analisando...';
+    if (analysisStatus === 'success') return 'Nenhum erro encontrado.';
 
-    // error status: show each syntax error on its own line
     if (syntaxError && syntaxError.length > 0) {
+      const visibleErrors = showAll
+        ? syntaxError
+        : syntaxError.slice(0, INITIAL_VISIBLE_ERRORS);
+      const hiddenCount = syntaxError.length - visibleErrors.length;
+
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {syntaxError.map((err, i) => {
-            // remove possíveis menções embutidas de linha/coluna na mensagem para evitar duplicação
-            const cleaned = err.message
-              .replace(/,?\s*Linha\s*\d+,\s*Coluna\s*\d+/g, '')
-              .replace(/,?\s*Coluna\s*\d+/g, '')
-              .trim();
-            return (
-              <div
-                key={i}
-                onClick={() => onGotoLine?.(err.line, err.column)}
-                style={{ whiteSpace: 'pre-wrap', cursor: 'pointer' }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onGotoLine?.(err.line, err.column); }}
-              >
-                {`[ERRO] Linha ${err.line}, Coluna ${err.column} : ${err.message}`}
-              </div>
-            );
-          })}
+          <strong>
+            {syntaxError.length === 1
+              ? '1 erro encontrado'
+              : `${syntaxError.length} erros encontrados`}
+          </strong>
+
+          {visibleErrors.map((err, i) => (
+            <div
+              key={`${err.line}-${err.column}-${i}`}
+              onClick={() => onGotoLine?.(err.line, err.column)}
+              style={{ whiteSpace: 'pre-wrap', cursor: 'pointer' }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  onGotoLine?.(err.line, err.column);
+                }
+              }}
+            >
+              {`[ERRO] Linha ${err.line}, Coluna ${err.column} : ${err.message}`}
+            </div>
+          ))}
+
+          {syntaxError.length > INITIAL_VISIBLE_ERRORS && (
+            <button
+              type="button"
+              onClick={() => setShowAll((current) => !current)}
+              style={{ alignSelf: 'flex-start', marginTop: 4 }}
+            >
+              {showAll ? 'Mostrar menos' : `Mostrar mais ${hiddenCount}`}
+            </button>
+          )}
         </div>
       );
     }
 
-    return '❌ Erro desconhecido.';
+    return 'Erro desconhecido.';
   };
 
   return (
