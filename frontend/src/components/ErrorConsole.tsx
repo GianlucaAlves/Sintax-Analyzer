@@ -45,7 +45,7 @@ export function ErrorConsole({ syntaxError, analysisStatus, onGotoLine }: ErrorC
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onGotoLine?.(err.line, err.column); }}
               >
-                {`[ERRO] Linha ${err.line}, Coluna ${err.column} : ${cleaned}`}
+                {`[ERRO] Linha ${err.line}, Coluna ${err.column} : ${err.message}`}
               </div>
             );
           })}

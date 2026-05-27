@@ -12,7 +12,7 @@ interface HighlightedCodeProps {
 
 // Mapa simples de cores por tipo de token (usado para realce)
 const TOKEN_COLORS: Record<TokenType, string> = {
-  KEYWORD:    '#569cd6',
+  KEYWORD:    '#00d30b',
   IDENTIFIER: '#9cdcfe',
   NUMBER:     '#b5cea8',
   STRING:     '#ce9178',
